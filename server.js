@@ -14,4 +14,6 @@ connectDB()
   })
   .catch((err) => {
     console.error("DB connection failed:", err.message);
+    // Exit instead of leaving a half-started process hanging
+    process.exit(1);
   });

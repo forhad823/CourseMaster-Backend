@@ -8,3 +8,8 @@ yarn-error.log*
 .DS_Store
 .vscode
 .vercel
+
+bug-report.txt
+z-note.txt
+z-project.txt
+
