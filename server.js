@@ -4,12 +4,15 @@ dotenv.config();
 const app = require("./app");
 const connectDB = require("./src/config/db");
 
+// const seedDatabase = require("./seed.js");
+
 const PORT = process.env.PORT || 5000;
 
 connectDB()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
+      // seedDatabase();
     });
   })
   .catch((err) => {

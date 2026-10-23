@@ -33,6 +33,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST");
   next();
 });
+
 app.use(express.json());
 
 // Middleware to ensure DB connection before handling requests

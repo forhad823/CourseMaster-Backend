@@ -56,7 +56,8 @@ const seedDatabase = async () => {
     console.log("Seeding Courses...");
     const course1 = await Course.create({
       title: "Complete Web Development Masterclass with Next.js & React 19",
-      description: "Master modern web development from HTML/CSS to advanced React 19, Next.js App Router, Express, and MongoDB. Includes hands-on real-world projects, live classes, quizzes, and code reviews.",
+      description:
+        "Master modern web development from HTML/CSS to advanced React 19, Next.js App Router, Express, and MongoDB. Includes hands-on real-world projects, live classes, quizzes, and code reviews.",
       instructorName: "Jhankar Mahbub",
       price: 5000,
       category: "Web Development",
@@ -76,12 +77,14 @@ const seedDatabase = async () => {
               liveClassDate: new Date("2026-04-15T18:00:00.000Z"),
               quiz: [
                 {
-                  question: "Which HTML5 tag is used to specify a header for a document or section?",
+                  question:
+                    "Which HTML5 tag is used to specify a header for a document or section?",
                   options: ["<section>", "<header>", "<head>", "<top>"],
                   correctIndex: 1,
                 },
                 {
-                  question: "What is the correct HTML element for inserting a line break?",
+                  question:
+                    "What is the correct HTML element for inserting a line break?",
                   options: ["<break>", "<lb>", "<br>", "<line>"],
                   correctIndex: 2,
                 },
@@ -90,7 +93,8 @@ const seedDatabase = async () => {
             {
               title: "Lesson 2: Flexbox & Grid Layouts Deep Dive",
               videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-              assignmentPrompt: "Build a fully responsive pricing card layout using CSS Flexbox and Grid. Submit your GitHub repository URL or live link.",
+              assignmentPrompt:
+                "Build a fully responsive pricing card layout using CSS Flexbox and Grid. Submit your GitHub repository URL or live link.",
             },
           ],
         },
@@ -102,7 +106,8 @@ const seedDatabase = async () => {
               videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
               quiz: [
                 {
-                  question: "Which hook is used for handling side effects in React?",
+                  question:
+                    "Which hook is used for handling side effects in React?",
                   options: ["useState", "useMemo", "useEffect", "useCallback"],
                   correctIndex: 2,
                 },
@@ -111,7 +116,8 @@ const seedDatabase = async () => {
             {
               title: "Lesson 2: Redux Toolkit & Global State",
               videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-              assignmentPrompt: "Implement a persistent shopping cart using Redux Toolkit and LocalStorage. Submit your code repo link.",
+              assignmentPrompt:
+                "Implement a persistent shopping cart using Redux Toolkit and LocalStorage. Submit your code repo link.",
             },
           ],
         },
@@ -120,14 +126,13 @@ const seedDatabase = async () => {
 
     const course2 = await Course.create({
       title: "Python for Data Science & Machine Learning",
-      description: "Learn Python programming, NumPy, Pandas, Matplotlib, and Scikit-Learn to solve real-world data science problems and build predictive machine learning models.",
+      description:
+        "Learn Python programming, NumPy, Pandas, Matplotlib, and Scikit-Learn to solve real-world data science problems and build predictive machine learning models.",
       instructorName: "Dr. Anisul Islam",
       price: 4500,
       category: "Data Science",
       tags: ["Python", "Machine Learning", "Data Science", "Pandas", "AI"],
-      batches: [
-        { name: "Batch 1 (2026)", startDate: new Date("2026-02-01") },
-      ],
+      batches: [{ name: "Batch 1 (2026)", startDate: new Date("2026-02-01") }],
       syllabus: [
         {
           title: "Module 1: Python Fundamentals & Data Structures",
@@ -138,7 +143,12 @@ const seedDatabase = async () => {
               quiz: [
                 {
                   question: "How do you define a function in Python?",
-                  options: ["func myFunc():", "def myFunc():", "function myFunc()", "define myFunc():"],
+                  options: [
+                    "func myFunc():",
+                    "def myFunc():",
+                    "function myFunc()",
+                    "define myFunc():",
+                  ],
                   correctIndex: 1,
                 },
               ],
@@ -146,7 +156,8 @@ const seedDatabase = async () => {
             {
               title: "Lesson 2: Exploratory Data Analysis with Pandas",
               videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-              assignmentPrompt: "Analyze the provided CSV dataset using Pandas and generate summary statistics and charts.",
+              assignmentPrompt:
+                "Analyze the provided CSV dataset using Pandas and generate summary statistics and charts.",
             },
           ],
         },
@@ -155,14 +166,13 @@ const seedDatabase = async () => {
 
     const course3 = await Course.create({
       title: "Cross-Platform Mobile Development with Flutter & Dart",
-      description: "Build beautiful, high-performance native iOS and Android apps using Flutter framework and Dart programming language.",
+      description:
+        "Build beautiful, high-performance native iOS and Android apps using Flutter framework and Dart programming language.",
       instructorName: "Sumit Saha",
       price: 4000,
       category: "Mobile App",
       tags: ["Flutter", "Dart", "Mobile", "Android", "iOS"],
-      batches: [
-        { name: "Batch 1 (2026)", startDate: new Date("2026-03-01") },
-      ],
+      batches: [{ name: "Batch 1 (2026)", startDate: new Date("2026-03-01") }],
       syllabus: [
         {
           title: "Module 1: Flutter Basics & Widget Tree",
@@ -173,7 +183,12 @@ const seedDatabase = async () => {
               quiz: [
                 {
                   question: "Which widget is immutable in Flutter?",
-                  options: ["StatefulWidget", "StatelessWidget", "InheritedWidget", "DynamicWidget"],
+                  options: [
+                    "StatefulWidget",
+                    "StatelessWidget",
+                    "InheritedWidget",
+                    "DynamicWidget",
+                  ],
                   correctIndex: 1,
                 },
               ],
@@ -236,7 +251,8 @@ const seedDatabase = async () => {
       answer: "https://github.com/rahim/pricing-card-assignment",
       status: "reviewed",
       reviewer: adminUser._id,
-      reviewNotes: "Great job! Responsive layout looks clean across mobile and desktop.",
+      reviewNotes:
+        "Great job! Responsive layout looks clean across mobile and desktop.",
       grade: 95,
     });
 
@@ -258,4 +274,10 @@ const seedDatabase = async () => {
   }
 };
 
-seedDatabase();
+// Only run automatically when executed directly (npm run seed),
+// NOT when required from server.js / tests.
+if (require.main === module) {
+  seedDatabase();
+}
+
+module.exports = seedDatabase;
