@@ -4,6 +4,9 @@ const Course = require("../models/Course");
 const Enrollment = require("../models/Enrollment");
 const AssignmentSubmission = require("../models/AssignmentSubmission");
 const User = require("../models/User");
+const QuizSubmission = require("../models/QuizSubmission");
+const httpError = require("../utils/httpError");
+const { isObjectId } = require("../utils/objectId");
 
 const createCourse = async (payload) => {
   const course = await Course.create(payload);
@@ -11,14 +14,36 @@ const createCourse = async (payload) => {
 };
 
 const updateCourse = async (id, payload) => {
-  const course = await Course.findByIdAndUpdate(id, payload, { new: true });
-  if (!course) throw new Error("Course not found");
+  if (!isObjectId(String(id))) throw httpError(404, "Course not found");
+
+  let course;
+  try {
+    // FIX (BUG-019): runValidators makes updates obey the schema (e.g. price >= 0)
+    course = await Course.findByIdAndUpdate(id, payload, {
+      returnDocument: "after",
+      runValidators: true,
+    });
+  } catch (err) {
+    if (err.name === "ValidationError" || err.name === "CastError") {
+      throw httpError(400, err.message);
+    }
+    throw err;
+  }
+  if (!course) throw httpError(404, "Course not found");
   return course;
 };
 
 const deleteCourse = async (id) => {
+  if (!isObjectId(String(id))) throw httpError(404, "Course not found");
   const course = await Course.findByIdAndDelete(id);
-  if (!course) throw new Error("Course not found");
+  if (!course) throw httpError(404, "Course not found");
+
+  // FIX (BUG-020): remove everything that pointed at the deleted course
+  await Promise.all([
+    Enrollment.deleteMany({ course: id }),
+    QuizSubmission.deleteMany({ course: id }),
+    AssignmentSubmission.deleteMany({ course: id }),
+  ]);
   return { message: "Course deleted" };
 };
 
@@ -36,10 +61,14 @@ const getEnrollments = async (query) => {
     .sort({ createdAt: -1 });
 };
 
-// ✅ NEW: get all assignment submissions (Code-8 bug: queries by courseId instead of course)
+// ✅ NEW: get all assignment submissions
 const getAssignments = async (query = {}) => {
   const filter = {};
-  if (query.courseId) filter.courseId = query.courseId; // Mongoose schema has 'course', not 'courseId'
+ 
+  if (query.courseId) {
+    if (!isObjectId(String(query.courseId))) throw httpError(400, "Invalid courseId");
+    filter.course = query.courseId;
+  }
 
   const submissions = await AssignmentSubmission.find(filter)
     .populate("student", "name email")
@@ -73,8 +102,23 @@ const getAssignments = async (query = {}) => {
 };
 
 // review/update an assignment submission (admin)
-const reviewAssignment = async (id, payload, adminId) => {
+const reviewAssignment = async (id, payload = {}, adminId) => {
   const { reviewNotes, grade, status } = payload;
+
+  if (!isObjectId(String(id))) throw httpError(404, "Submission not found");
+
+  // FIX (BUG-019): validate review fields (findByIdAndUpdate skips schema validation)
+  if (typeof grade !== "undefined") {
+    if (typeof grade !== "number" || !Number.isFinite(grade) || grade < 0 || grade > 100) {
+      throw httpError(400, "grade must be a number between 0 and 100");
+    }
+  }
+  if (typeof status !== "undefined" && !["submitted", "reviewed"].includes(status)) {
+    throw httpError(400, 'status must be "submitted" or "reviewed"');
+  }
+  if (typeof reviewNotes !== "undefined" && typeof reviewNotes !== "string") {
+    throw httpError(400, "reviewNotes must be a string");
+  }
 
   const update = {};
   if (typeof status !== "undefined") update.status = status;
@@ -82,50 +126,57 @@ const reviewAssignment = async (id, payload, adminId) => {
   if (typeof grade !== "undefined") update.grade = grade;
   if (adminId) update.reviewer = adminId;
 
-  const submission = await AssignmentSubmission.findByIdAndUpdate(id, update, { new: true })
+  const submission = await AssignmentSubmission.findByIdAndUpdate(id, update, {
+    returnDocument: "after",
+    runValidators: true,
+  })
     .populate("student", "name email")
     .populate("course", "title")
     .populate("reviewer", "name");
 
-  if (!submission) throw new Error("Submission not found");
+  if (!submission) throw httpError(404, "Submission not found");
 
   return submission;
 };
 
 // Get analytics data for dashboard
 const getAnalytics = async () => {
-  // Get enrollments grouped by date (last 30 days)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  thirtyDaysAgo.setHours(0, 0, 0, 0);
+  // FIX (BUG-017): work in UTC end-to-end. Mongo stores createdAt in UTC, so
+  // bucketing by local midnight + toISOString() shifted every day by the server's
+  // UTC offset (e.g. Bangladesh, UTC+6) and today's enrollments never appeared.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const windowStart = new Date(todayUTC - 29 * DAY_MS); // 30 days including today
 
   const enrollments = await Enrollment.find({
-    createdAt: { $gte: thirtyDaysAgo }
-  }).sort({ createdAt: 1 });
+    createdAt: { $gte: windowStart },
+  })
+    .select("createdAt")
+    .sort({ createdAt: 1 })
+    .lean();
 
   // Group by date
   const enrollmentData = {};
-  enrollments.forEach(enrollment => {
-    const date = enrollment.createdAt.toISOString().split('T')[0];
+  enrollments.forEach((enrollment) => {
+    const date = enrollment.createdAt.toISOString().split("T")[0];
     enrollmentData[date] = (enrollmentData[date] || 0) + 1;
   });
 
   // Convert to array format for chart (last 30 days)
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const chartData = [];
   for (let i = 29; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    date.setHours(0, 0, 0, 0);
-    const dateStr = date.toISOString().split('T')[0];
+    const date = new Date(todayUTC - i * DAY_MS);
+    const dateStr = date.toISOString().split("T")[0];
 
     // Format date for display (e.g., "Jan 15")
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const displayDate = `${monthNames[date.getMonth()]} ${date.getDate()}`;
+    const displayDate = `${monthNames[date.getUTCMonth()]} ${date.getUTCDate()}`;
 
     chartData.push({
       date: dateStr,
       displayDate: displayDate,
-      enrollments: enrollmentData[dateStr] || 0
+      enrollments: enrollmentData[dateStr] || 0,
     });
   }
 

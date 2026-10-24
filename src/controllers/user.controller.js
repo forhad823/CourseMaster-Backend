@@ -5,7 +5,7 @@ const getAllUsers = async (req, res) => {
     const users = await userService.getAllUsers();
     res.json(users);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(err.statusCode || 400).json({ message: err.message });
   }
 };
 
@@ -19,7 +19,7 @@ const deleteUser = async (req, res) => {
     const result = await userService.deleteUser(id);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(err.statusCode || 400).json({ message: err.message });
   }
 };
 
@@ -34,7 +34,7 @@ const updateUserRole = async (req, res) => {
     const user = await userService.updateUserRole(id, role);
     res.json(user);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(err.statusCode || 400).json({ message: err.message });
   }
 };
 
@@ -48,7 +48,7 @@ const toggleBanUser = async (req, res) => {
     const user = await userService.toggleBanUser(id);
     res.json(user);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(err.statusCode || 400).json({ message: err.message });
   }
 };
 

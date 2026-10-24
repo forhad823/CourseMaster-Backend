@@ -1,6 +1,11 @@
 // service to handle course-related operations
 
 const Course = require("../models/Course");
+const httpError = require("../utils/httpError");
+const { isObjectId } = require("../utils/objectId");
+
+// FIX (BUG-016): escape user text so it is matched literally inside $regex
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const getCourses = async (query) => {
   const {
@@ -18,10 +23,11 @@ const getCourses = async (query) => {
 
   const filter = {};
 
-  if (search && typeof search === "string") {
+  if (search && typeof search === "string" && search.trim()) {
+    const pattern = escapeRegex(search.trim());
     filter.$or = [
-      { title: { $regex: search, $options: "i" } },
-      { instructorName: { $regex: search, $options: "i" } },
+      { title: { $regex: pattern, $options: "i" } },
+      { instructorName: { $regex: pattern, $options: "i" } },
     ];
   }
 
@@ -36,9 +42,11 @@ const getCourses = async (query) => {
     }
   }
 
-  let sortObj = {};
-  if (sort === "price_asc") sortObj.price = 1;
-  if (sort === "price_desc") sortObj.price = -1;
+  // FIX (BUG-016): always sort on a unique tie-breaker (_id) so skip/limit pagination
+  // never repeats or drops courses between pages
+  let sortObj = { createdAt: -1, _id: -1 };
+  if (sort === "price_asc") sortObj = { price: 1, _id: 1 };
+  if (sort === "price_desc") sortObj = { price: -1, _id: 1 };
 
   const skip = (pageNum - 1) * limitNum;
 
@@ -59,8 +67,10 @@ const getCourses = async (query) => {
 };
 
 const getCourseById = async (id) => {
+  // FIX (BUG-022): a malformed id is just "not found" – don't leak Mongoose internals
+  if (!isObjectId(String(id))) throw httpError(404, "Course not found");
   const course = await Course.findById(id);
-  if (!course) throw new Error("Course not found");
+  if (!course) throw httpError(404, "Course not found");
   return course;
 };
 

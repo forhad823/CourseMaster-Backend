@@ -1,12 +1,9 @@
 // controller for course-related routes
 
 const courseService = require("../services/course.service");
-const connectDB = require("../config/db");
 
 const getCourses = async (req, res) => {
   try {
-    // Ensure DB connection before processing request (for serverless)
-    await connectDB();
     const data = await courseService.getCourses(req.query);
     res.json(data);
   } catch (err) {
@@ -20,7 +17,7 @@ const getCourseById = async (req, res) => {
     const course = await courseService.getCourseById(req.params.id);
     res.json(course);
   } catch (err) {
-    res.status(404).json({ message: err.message });
+    res.status(err.statusCode || 404).json({ message: err.message });
   }
 };
 

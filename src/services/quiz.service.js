@@ -1,10 +1,20 @@
 const Course = require("../models/Course");
 const Enrollment = require("../models/Enrollment");
 const QuizSubmission = require("../models/QuizSubmission");
+const { isObjectId } = require("../utils/objectId");
+const { findLesson } = require("../utils/courseHelpers");
 
-const submitQuiz = async (studentId, payload) => {
+const submitQuiz = async (studentId, payload = {}) => {
   const { courseId, lessonId, answers } = payload;
   // answers = [selectedIndex, selectedIndex, ...]
+
+  // FIX (BUG-015): validate the payload before touching the database
+  if (!isObjectId(String(courseId)) || !isObjectId(String(lessonId))) {
+    throw new Error("Valid courseId and lessonId are required");
+  }
+  if (!Array.isArray(answers) || !answers.every((a) => a === null || Number.isInteger(a))) {
+    throw new Error("answers must be an array of selected option indexes");
+  }
 
   const enrolled = await Enrollment.findOne({ student: studentId, course: courseId });
   if (!enrolled) throw new Error("You are not enrolled in this course");
@@ -13,15 +23,9 @@ const submitQuiz = async (studentId, payload) => {
   if (!course) throw new Error("Course not found");
 
   // find lesson quiz
-  let quiz = null;
-  for (const mod of course.syllabus) {
-    const lesson = mod.lessons.id(lessonId);
-    if (lesson) {
-      quiz = lesson.quiz || [];
-      break;
-    }
-  }
-  if (!quiz) throw new Error("Lesson not found");
+  const lesson = findLesson(course, lessonId);
+  if (!lesson) throw new Error("Lesson not found");
+  const quiz = lesson.quiz || [];
   if (quiz.length === 0) throw new Error("No quiz in this lesson");
 
   let score = 0;
@@ -30,8 +34,7 @@ const submitQuiz = async (studentId, payload) => {
   });
 
   const total = quiz.length;
-  // Code-4 bug: multiplied by 10 instead of 100
-  const percent = Math.round((score / total) * 10);
+  const percent = Math.round((score / total) * 100);
 
   // Check if student already submitted this quiz (optional - allow retakes)
   // If you want to prevent duplicates, uncomment the following:

@@ -25,11 +25,13 @@ Pass: admin123
 
 1. Clone the repository
 2. Navigate to the backend directory:
+
    ```bash
    cd courseMaster_Backend
    ```
 
 3. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -37,6 +39,7 @@ Pass: admin123
 4. Create a `.env` file in the root directory (see `.env.example`)
 
 5. Start the development server:
+
    ```bash
    npm run dev
    ```
@@ -44,6 +47,10 @@ Pass: admin123
 6. Start the production server:
    ```bash
    npm start
+   ```
+7. To seed data for initial project setup
+   ```bash
+   npm seed
    ```
 
 ## Environment Variables
@@ -74,11 +81,13 @@ FRONTEND_URL=http://localhost:5173
 ```
 
 **Required Variables:**
+
 - `PORT` - Server port (default: 5000)
 - `MONGODB_URI` - MongoDB connection string (required)
 - `JWT_SECRET` - Secret key for JWT token generation (required)
 
 **Optional Variables:**
+
 - `NODE_ENV` - Environment mode (development/production)
 - `ADMIN_REGISTRATION_KEY` - Secret key for admin account registration (optional)
   - If set, users can register as admin by providing this key during registration
@@ -90,6 +99,7 @@ FRONTEND_URL=http://localhost:5173
 - `FRONTEND_URL` - Frontend URL for email links
 
 **Note for Email Setup:**
+
 - For Gmail, you need to:
   1. Enable 2-Factor Authentication
   2. Generate an App Password (not your regular password)
@@ -103,6 +113,7 @@ Base URL: `http://localhost:5000/api/api`
 ### Authentication Endpoints
 
 #### Register
+
 - **POST** `/api/auth/register`
 - **Body:**
   ```json
@@ -110,16 +121,17 @@ Base URL: `http://localhost:5000/api/api`
     "name": "John Doe",
     "email": "john@example.com",
     "password": "password123",
-    "adminKey": "optional-admin-key" 
+    "adminKey": "optional-admin-key"
   }
   ```
 - **Response:** User object with token
-- **Note:** 
+- **Note:**
   - By default, users are registered as "student"
   - To register as "admin", provide a valid `adminKey` that matches `ADMIN_REGISTRATION_KEY` in environment variables
   - If invalid admin key is provided, registration will fail
 
 #### Login
+
 - **POST** `/api/auth/login`
 - **Body:**
   ```json
@@ -131,6 +143,7 @@ Base URL: `http://localhost:5000/api/api`
 - **Response:** User object with token
 
 #### Get Current User
+
 - **GET** `/api/auth/me`
 - **Headers:** `Authorization: Bearer <token>`
 - **Response:** User object
@@ -138,6 +151,7 @@ Base URL: `http://localhost:5000/api/api`
 ### Course Endpoints (Public)
 
 #### Get All Courses
+
 - **GET** `/api/courses`
 - **Query Parameters:**
   - `page` - Page number (default: 1)
@@ -149,12 +163,14 @@ Base URL: `http://localhost:5000/api/api`
 - **Response:** Paginated courses list
 
 #### Get Course by ID
+
 - **GET** `/api/courses/:id`
 - **Response:** Course object with full details
 
 ### Enrollment Endpoints (Protected - Student)
 
 #### Enroll in Course
+
 - **POST** `/api/enrollments/:courseId`
 - **Headers:** `Authorization: Bearer <token>`
 - **Body (optional):**
@@ -166,11 +182,13 @@ Base URL: `http://localhost:5000/api/api`
 - **Response:** Enrollment object
 
 #### Get My Enrollments
+
 - **GET** `/api/enrollments/my`
 - **Headers:** `Authorization: Bearer <token>`
 - **Response:** Array of enrollment objects
 
 #### Mark Lesson as Complete
+
 - **PATCH** `/api/enrollments/:enrollId/complete-lesson`
 - **Headers:** `Authorization: Bearer <token>`
 - **Body:**
@@ -184,6 +202,7 @@ Base URL: `http://localhost:5000/api/api`
 ### Assignment Endpoints (Protected - Student)
 
 #### Submit Assignment
+
 - **POST** `/api/assignments/submit`
 - **Headers:** `Authorization: Bearer <token>`
 - **Body:**
@@ -198,6 +217,7 @@ Base URL: `http://localhost:5000/api/api`
 - **Response:** Assignment submission object
 
 #### Get My Submissions
+
 - **GET** `/api/assignments/my`
 - **Headers:** `Authorization: Bearer <token>`
 - **Response:** Array of assignment submissions
@@ -205,6 +225,7 @@ Base URL: `http://localhost:5000/api/api`
 ### Quiz Endpoints (Protected - Student)
 
 #### Submit Quiz
+
 - **POST** `/api/quizzes/submit`
 - **Headers:** `Authorization: Bearer <token>`
 - **Body:**
@@ -227,23 +248,27 @@ Base URL: `http://localhost:5000/api/api`
 ### Admin Endpoints (Protected - Admin Only)
 
 #### Create Course
+
 - **POST** `/api/admin/courses`
 - **Headers:** `Authorization: Bearer <token>`
 - **Body:** See Course Schema below
 - **Response:** Created course object
 
 #### Update Course
+
 - **PATCH** `/api/admin/courses/:id`
 - **Headers:** `Authorization: Bearer <token>`
 - **Body:** Course fields to update
 - **Response:** Updated course object
 
 #### Delete Course
+
 - **DELETE** `/api/admin/courses/:id`
 - **Headers:** `Authorization: Bearer <token>`
 - **Response:** Success message
 
 #### Get All Enrollments
+
 - **GET** `/api/admin/enrollments`
 - **Headers:** `Authorization: Bearer <token>`
 - **Query Parameters:**
@@ -252,11 +277,13 @@ Base URL: `http://localhost:5000/api/api`
 - **Response:** Array of enrollment objects
 
 #### Get All Assignments
+
 - **GET** `/api/admin/assignments`
 - **Headers:** `Authorization: Bearer <token>`
 - **Response:** Array of assignment submissions
 
 #### Get Analytics
+
 - **GET** `/api/admin/analytics`
 - **Headers:** `Authorization: Bearer <token>` (Admin only)
 - **Response:** Analytics data including:
@@ -265,6 +292,7 @@ Base URL: `http://localhost:5000/api/api`
   - Platform statistics (total enrollments, courses, students, instructors)
 
 #### Review Assignment
+
 - **PATCH** `/api/admin/assignments/:id/review`
 - **Headers:** `Authorization: Bearer <token>`
 - **Body:**
@@ -280,6 +308,7 @@ Base URL: `http://localhost:5000/api/api`
 ## Data Models
 
 ### Course Schema
+
 ```javascript
 {
   title: String (required, indexed),
@@ -309,6 +338,7 @@ Base URL: `http://localhost:5000/api/api`
 ```
 
 ### User Schema
+
 ```javascript
 {
   name: String (required),
@@ -319,6 +349,7 @@ Base URL: `http://localhost:5000/api/api`
 ```
 
 ### Enrollment Schema
+
 ```javascript
 {
   student: ObjectId (ref: User),
@@ -334,6 +365,7 @@ Base URL: `http://localhost:5000/api/api`
 ## Error Handling
 
 All errors follow this format:
+
 ```json
 {
   "message": "Error message here"
@@ -341,6 +373,7 @@ All errors follow this format:
 ```
 
 Common HTTP Status Codes:
+
 - `200` - Success
 - `201` - Created
 - `400` - Bad Request
@@ -352,12 +385,14 @@ Common HTTP Status Codes:
 ## Bonus Features
 
 ### Email Notifications
+
 - Welcome emails are automatically sent to new users upon registration
 - Uses Nodemailer for email delivery
 - Configure email settings in `.env` file
 - Email sending is non-blocking (won't fail registration if email fails)
 
 ### Analytics Dashboard
+
 - Admin analytics dashboard with enrollment trends
 - Charts showing enrollments over the last 30 days
 - Top courses by enrollment statistics
@@ -393,6 +428,7 @@ Admins can be created in two ways:
 ## Database Indexing
 
 The following fields are indexed for performance:
+
 - Course: `title`, `instructorName`, `category`, `tags`
 - Enrollment: `{student: 1, course: 1}` (unique compound index)
 
@@ -405,4 +441,3 @@ The backend is deployed on **Vercel**. Make sure to set all environment variable
 - Development server runs on `http://localhost:5000` (default)
 - Uses `nodemon` for auto-restart during development
 - MongoDB connection is handled via Mongoose
-

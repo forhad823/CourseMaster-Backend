@@ -1,19 +1,38 @@
 const AssignmentSubmission = require("../models/AssignmentSubmission");
 const Enrollment = require("../models/Enrollment");
+const Course = require("../models/Course");
+const { isObjectId } = require("../utils/objectId");
+const { findLesson } = require("../utils/courseHelpers");
 
-const submitAssignment = async (studentId, payload) => {
+const submitAssignment = async (studentId, payload = {}) => {
   const { courseId, lessonId, answerType, answer } = payload;
+
+  // FIX (BUG-015): validate the payload before touching the database
+  if (!isObjectId(String(courseId)) || !isObjectId(String(lessonId))) {
+    throw new Error("Valid courseId and lessonId are required");
+  }
+  if (!["text", "link"].includes(answerType)) {
+    throw new Error('answerType must be "text" or "link"');
+  }
+  if (typeof answer !== "string" || answer.trim() === "") {
+    throw new Error("answer is required");
+  }
 
   // ensure student enrolled
   const enrolled = await Enrollment.findOne({ student: studentId, course: courseId });
   if (!enrolled) throw new Error("You are not enrolled in this course");
+
+  // FIX (BUG-015): the lesson must exist inside this course
+  const course = await Course.findById(courseId);
+  if (!course) throw new Error("Course not found");
+  if (!findLesson(course, lessonId)) throw new Error("Lesson not found in this course");
 
   const submission = await AssignmentSubmission.create({
     student: studentId,
     course: courseId,
     lessonId,
     answerType,
-    answer,
+    answer: answer.trim(),
   });
 
   return submission;
